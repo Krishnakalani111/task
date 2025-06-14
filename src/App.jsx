@@ -2,16 +2,21 @@
 import { useState } from 'react'
 import Board from './components/Board/Board'
 import SearchBar from './components/Search/SearchBar'
+import AssigneeFilter from './components/Search/AssigneeFilter'
 import { initialData } from './data/mockData'
 import useLocalStorage from './hooks/useLocalStorage'
-import './App.css'
 
 function App() {
   const [data, setData] = useLocalStorage('kanban-data', initialData)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedAssignee, setSelectedAssignee] = useState('')
 
   const handleSearch = (term) => {
     setSearchTerm(term)
+  }
+
+  const handleAssigneeFilter = (assigneeId) => {
+    setSelectedAssignee(assigneeId)
   }
 
   const handleDataUpdate = (newData) => {
@@ -39,7 +44,17 @@ function App() {
         
         {/* Search and Filters */}
         <div className="mt-4 flex items-center justify-between">
-          <SearchBar onSearch={handleSearch} />
+          <div className="flex items-center space-x-6">
+            <SearchBar onSearch={handleSearch} />
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-gray-500 font-medium">Filter by:</span>
+              <AssigneeFilter 
+                assignees={data.assignees || []}
+                selectedAssignee={selectedAssignee}
+                onAssigneeFilter={handleAssigneeFilter}
+              />
+            </div>
+          </div>
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-500">GROUP BY</span>
             <select className="border border-gray-300 rounded-md px-3 py-1 text-sm">
@@ -55,6 +70,7 @@ function App() {
           data={data} 
           onDataUpdate={handleDataUpdate} 
           searchTerm={searchTerm}
+          selectedAssignee={selectedAssignee}
         />
       </div>
     </div>

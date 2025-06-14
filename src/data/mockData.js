@@ -1,5 +1,19 @@
 // src/data/mockData.js
 export const initialData = {
+  assignees: [
+    { id: 1, name: 'John Doe', avatar: '👨‍💻' },
+    { id: 2, name: 'Jane Smith', avatar: '👩‍💼' },
+    { id: 3, name: 'Mike Johnson', avatar: '👨‍🔧' },
+    { id: 4, name: 'Sarah Wilson', avatar: '👩‍🎨' },
+    { id: 5, name: 'Alex Brown', avatar: '👨‍🚀' },
+    { id: 6, name: 'David Lee', avatar: '👨‍⚕️' },
+    { id: 7, name: 'Lisa Garcia', avatar: '👩‍🔬' },
+    { id: 8, name: 'Tom Anderson', avatar: '👨‍🏫' },
+    { id: 9, name: 'Emma Davis', avatar: '👩‍💻' },
+    { id: 10, name: 'Chris Taylor', avatar: '👨‍🎯' },
+    { id: 11, name: 'Ryan Miller', avatar: '👨‍🔬' },
+    { id: 12, name: 'Nicole White', avatar: '👩‍🚀' }
+  ],
   columns: {
     'todo': {
       id: 'todo',

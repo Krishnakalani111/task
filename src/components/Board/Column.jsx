@@ -1,7 +1,14 @@
 // src/components/Board/Column.jsx
 import TaskCard from './TaskCard.jsx'
+import { useDroppable } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 
-const Column = ({ column, tasks, onTaskClick, onAddTask, onEditTask, onRemoveColumn }) => {
+const Column = ({ column, tasks, onTaskClick, onAddTask, onEditTask,onDeleteTask, onRemoveColumn }) => {
+  const { setNodeRef } = useDroppable({
+    id: column.id
+  });
+
+
   return (
     <div className="flex-shrink-0 w-80">
       <div className="bg-gray-50 rounded-lg p-4">
@@ -38,15 +45,24 @@ const Column = ({ column, tasks, onTaskClick, onAddTask, onEditTask, onRemoveCol
         </div>
 
         {/* Tasks */}
-        <div className="space-y-3 min-h-32">
-          {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onClick={() => onTaskClick(task)}
-              onEdit={() => onEditTask(task)}
-            />
-          ))}
+        <div 
+          ref={setNodeRef}
+          className="space-y-3 min-h-32"
+        >
+          <SortableContext 
+            items={tasks.map(task => task.id)} 
+            strategy={verticalListSortingStrategy}
+          >
+            {tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onClick={() => onTaskClick(task)}
+                onEdit={() => onEditTask(task)}
+                onDelete={() => onDeleteTask(task.id)}  
+              />
+            ))}
+          </SortableContext>
           
           {/* Add Task Button */}
           <button

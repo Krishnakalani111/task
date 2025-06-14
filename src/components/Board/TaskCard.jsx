@@ -1,20 +1,55 @@
 // src/components/Board/TaskCard.jsx
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { getTypeColor, getPriorityColor, getEffortColor } from '../../utils/taskUtils'
 
-const TaskCard = ({ task, onClick, onEdit }) => {
+const TaskCard = ({ task, onClick, onEdit, onDelete }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
   const handleCardClick = (e) => {
     e.stopPropagation()
     onClick()
   }
+
+  const handleEditPointerDown = (e) => {
+    console.log("Edit pointer down - preventing drag");
+    e.stopPropagation();
+  };
+  const handleDeletePointerDown = (e) => {
+    console.log("Delete pointer down - preventing drag");
+    e.stopPropagation();
+  };
 
   const handleEditClick = (e) => {
     e.stopPropagation()
     onEdit()
   }
 
+  const handleDeleteClick = (e) => {
+    e.stopPropagation()
+    onDelete()
+  }
+
   return (
     <div 
-      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer group ${
+        isDragging ? 'opacity-50' : ''
+      }`}
       onClick={handleCardClick}
     >
       {/* Task Header */}
@@ -25,15 +60,30 @@ const TaskCard = ({ task, onClick, onEdit }) => {
           </span>
           <span className="text-xs text-gray-500">{task.ticketId}</span>
         </div>
-        <button
-          onClick={handleEditClick}
-          className="p-1 text-gray-400 hover:text-gray-600 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-          title="Edit task"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-        </button>
+        <div className="flex items-center space-x-1">
+          <button
+            onClick={handleEditClick}
+             onPointerDown={handleEditPointerDown}
+            onMouseDown={handleEditPointerDown}
+            className="p-1 text-gray-400 hover:text-blue-600 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Edit task"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+          <button
+            onClick={handleDeleteClick}
+            className="p-1 text-gray-400 hover:text-red-600 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Delete task"
+              onPointerDown={handleDeletePointerDown}
+            onMouseDown={handleDeletePointerDown}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Task Title */}

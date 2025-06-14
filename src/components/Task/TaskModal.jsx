@@ -2,30 +2,38 @@
 import { useState, useEffect } from 'react'
 import TaskForm from './TaskForm'
 
-const TaskModal = ({ task, editingTask, onClose, onSave }) => {
-  const [isEditing, setIsEditing] = useState(false)
+const TaskModal = ({ task, editingTask, onClose, onSave, assignees = [] }) => {
+  const [isEditing, setIsEditing] = useState(!!editingTask)
 
   useEffect(() => {
-    if (editingTask) {
-      setIsEditing(true)
-    }
+    setIsEditing(!!editingTask)
   }, [editingTask])
 
   const handleEdit = () => {
     setIsEditing(true)
   }
 
+  // If we have editingTask, we should use that; otherwise use task for viewing
+  const displayTask = editingTask || task
+
   const handleSave = (taskData) => {
     onSave(taskData)
-    setIsEditing(false)
+    // Don't set isEditing to false here, let the parent handle closing
   }
 
   const handleCancel = () => {
     if (editingTask?.isNew) {
+      // If it's a new task, close the entire modal
       onClose()
     } else {
+      // If editing existing task, go back to view mode
       setIsEditing(false)
     }
+  }
+
+  const handleClose = () => {
+    // Always close the entire modal
+    onClose()
   }
 
   return (
@@ -33,16 +41,17 @@ const TaskModal = ({ task, editingTask, onClose, onSave }) => {
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {isEditing ? (
           <TaskForm
-            task={editingTask || task}
+            task={displayTask}
             onSave={handleSave}
             onCancel={handleCancel}
             isNew={editingTask?.isNew}
+            assignees={assignees}
           />
         ) : (
           <TaskDetails
-            task={task}
+            task={displayTask}
             onEdit={handleEdit}
-            onClose={onClose}
+            onClose={handleClose}
           />
         )}
       </div>
@@ -98,7 +107,7 @@ const TaskDetails = ({ task, onEdit, onClose }) => {
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-2">Assignee</h3>
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+              <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white text-sm font-medium">
                 {task.assignee?.charAt(0) || '?'}
               </div>
               <span className="text-gray-900">{task.assignee || 'Unassigned'}</span>

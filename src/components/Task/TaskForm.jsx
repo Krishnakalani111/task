@@ -1,7 +1,7 @@
 // src/components/Task/TaskForm.jsx
 import { useState } from 'react'
 
-const TaskForm = ({ task, onSave, onCancel, isNew }) => {
+const TaskForm = ({ task, onSave, onCancel, isNew, assignees = [] }) => {
   const [formData, setFormData] = useState({
     title: task?.title || '',
     type: task?.type || 'FEATURE',
@@ -26,8 +26,15 @@ const TaskForm = ({ task, onSave, onCancel, isNew }) => {
   const handleSubmit = (e) => {
     e.preventDefault()
     
+    // Validate required fields
+    if (!formData.title.trim()) {
+      alert('Title is required')
+      return
+    }
+    
     const processedData = {
       ...formData,
+      title: formData.title.trim(),
       effort: parseInt(formData.effort) || 1,
       tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
       dependsOn: formData.dependsOn ? formData.dependsOn.split(',').map(dep => dep.trim()).filter(dep => dep) : [],
@@ -134,15 +141,24 @@ const TaskForm = ({ task, onSave, onCancel, isNew }) => {
             <label htmlFor="assignee" className="block text-sm font-medium text-gray-700 mb-2">
               Assignee
             </label>
-            <input
-              type="text"
+            <select
               id="assignee"
               name="assignee"
               value={formData.assignee}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter assignee name"
-            />
+            >
+              <option value="">Select assignee...</option>
+              {assignees && assignees.length > 0 ? (
+                assignees.map((assignee) => (
+                  <option key={assignee.id} value={assignee.name}>
+                    {assignee.name}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No assignees available</option>
+              )}
+            </select>
           </div>
 
           <div>
@@ -238,7 +254,8 @@ const TaskForm = ({ task, onSave, onCancel, isNew }) => {
           </button>
           <button
             type="submit"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            disabled={!formData.title.trim()}
+            className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isNew ? 'Create Task' : 'Save Changes'}
           </button>

@@ -1,42 +1,69 @@
 // src/utils/taskUtils.js
 
-export const filterTasks = (tasks, searchTerm) => {
-  if (!searchTerm.trim()) {
-    return Object.keys(tasks)
+export const filterTasks = (tasks, searchTerm, selectedAssignee, assignees = []) => {
+  console.log('filterTasks - selectedAssignee:', selectedAssignee)
+  console.log('filterTasks - assignees:', assignees)
+  
+  let filteredTaskIds = Object.keys(tasks)
+
+  // Filter by search term
+  if (searchTerm && searchTerm.trim()) {
+    const lowerSearchTerm = searchTerm.toLowerCase()
+    
+    filteredTaskIds = filteredTaskIds.filter(taskId => {
+      const task = tasks[taskId]
+      
+      // Search in title
+      if (task.title?.toLowerCase().includes(lowerSearchTerm)) {
+        return true
+      }
+      
+      // Search in type
+      if (task.type?.toLowerCase().includes(lowerSearchTerm)) {
+        return true
+      }
+      
+      // Search in description
+      if (task.description?.toLowerCase().includes(lowerSearchTerm)) {
+        return true
+      }
+      
+      // Search in assignee (now searches by name)
+      if (task.assignee?.toLowerCase().includes(lowerSearchTerm)) {
+        return true
+      }
+      
+      // Search in tags
+      if (task.tags?.some(tag => tag.toLowerCase().includes(lowerSearchTerm))) {
+        return true
+      }
+      
+      // Search in ticket ID
+      if (task.ticketId?.toLowerCase().includes(lowerSearchTerm)) {
+        return true
+      }
+      
+      return false
+    })
   }
 
-  const lowerSearchTerm = searchTerm.toLowerCase()
-  
-  return Object.keys(tasks).filter(taskId => {
-    const task = tasks[taskId]
+  // Filter by selected assignee
+  if (selectedAssignee && selectedAssignee !== '') {
+    console.log('Filtering by assignee ID:', selectedAssignee)
+    const selectedAssigneeData = assignees.find(a => a.id.toString() === selectedAssignee.toString())
+    console.log('Found assignee data:', selectedAssigneeData)
     
-    // Search in title
-    if (task.title?.toLowerCase().includes(lowerSearchTerm)) {
-      return true
+    if (selectedAssigneeData) {
+      filteredTaskIds = filteredTaskIds.filter(taskId => {
+        const task = tasks[taskId]
+        console.log(`Task ${taskId} assignee:`, task.assignee, 'Looking for:', selectedAssigneeData.name)
+        return task.assignee === selectedAssigneeData.name
+      })
     }
-    
-    // Search in type
-    if (task.type?.toLowerCase().includes(lowerSearchTerm)) {
-      return true
-    }
-    
-    // Search in description
-    if (task.description?.toLowerCase().includes(lowerSearchTerm)) {
-      return true
-    }
-    
-    // Search in assignee
-    if (task.assignee?.toLowerCase().includes(lowerSearchTerm)) {
-      return true
-    }
-    
-    // Search in tags
-    if (task.tags?.some(tag => tag.toLowerCase().includes(lowerSearchTerm))) {
-      return true
-    }
-    
-    return false
-  })
+  }
+
+  console.log('Final filtered task IDs:', filteredTaskIds)
+  return filteredTaskIds
 }
 
 export const getTypeColor = (type) => {
