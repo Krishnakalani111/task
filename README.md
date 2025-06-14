@@ -20,7 +20,6 @@ A modern, feature-rich Kanban board application built with React, Vite, and Tail
 - **Priority Levels**: P0 (Critical) to P3 (Low) with color coding
 
 ### UI/UX Features
-- **Responsive Design**: Works on desktop and mobile devices
 - **Modern Interface**: Clean, professional design with Tailwind CSS
 - **Interactive Elements**: Hover effects, animations, and visual feedback
 - **Modal System**: Dedicated modals for task creation, editing, and confirmations
