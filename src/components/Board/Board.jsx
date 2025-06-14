@@ -3,26 +3,24 @@ import { useState } from 'react'
 import Column from './Column'
 import TaskModal from '../Task/TaskModal'
 import ConfirmationModal from '../UI/ConfirmationModal'
+import ColumnModal from './ColumnModal'
 import { filterTasks } from '../../utils/taskUtils'
 import { DndContext, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 
 const Board = ({ data, onDataUpdate, searchTerm, selectedAssignee }) => {
-  // Debug logs to see what we're getting
-  console.log('Board - selectedAssignee:', selectedAssignee)
-  console.log('Board - assignees:', data.assignees)
-  
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState(null)
   const [editingTask, setEditingTask] = useState(null)
   const [deleteConfirmation, setDeleteConfirmation] = useState({ isOpen: false, taskId: null, taskTitle: '' })
+  const [columnModal, setColumnModal] = useState({ isOpen: false, column: null })
+  const [columnDeleteConfirmation, setColumnDeleteConfirmation] = useState({ isOpen: false, columnId: null, columnTitle: '', hasTask: false })
 
   // Get assignees from data
   const assignees = data.assignees || []
 
   // Filter tasks based on search term and selected assignee
   const filteredTasks = filterTasks(data.tasks, searchTerm, selectedAssignee, assignees)
-  console.log('Board - filteredTasks:', filteredTasks)
 
   const handleTaskClick = (task) => {
     setSelectedTask(task)
@@ -220,9 +218,10 @@ const Board = ({ data, onDataUpdate, searchTerm, selectedAssignee }) => {
   }
 
   const handleAddColumn = () => {
-    const columnName = prompt('Enter column name:')
-    if (!columnName) return
+    setColumnModal({ isOpen: true, column: null })
+  }
 
+  const handleSaveColumn = (columnName) => {
     const newColumnId = `column-${Date.now()}`
     const newData = {
       ...data,
@@ -230,7 +229,7 @@ const Board = ({ data, onDataUpdate, searchTerm, selectedAssignee }) => {
         ...data.columns,
         [newColumnId]: {
           id: newColumnId,
-          title: columnName.toUpperCase(),
+          title: columnName,
           taskIds: []
         }
       },
@@ -246,11 +245,17 @@ const Board = ({ data, onDataUpdate, searchTerm, selectedAssignee }) => {
     }
 
     const column = data.columns[columnId]
-    if (column.taskIds.length > 0) {
-      if (!confirm('This column contains tasks. Are you sure you want to delete it? All tasks will be lost.')) {
-        return
-      }
-    }
+    setColumnDeleteConfirmation({
+      isOpen: true,
+      columnId,
+      columnTitle: column.title,
+      hasTasks: column.taskIds.length > 0
+    })
+  }
+
+  const confirmColumnDelete = () => {
+    const columnId = columnDeleteConfirmation.columnId
+    const column = data.columns[columnId]
 
     const newColumns = { ...data.columns }
     delete newColumns[columnId]
@@ -268,6 +273,11 @@ const Board = ({ data, onDataUpdate, searchTerm, selectedAssignee }) => {
       columnOrder: data.columnOrder.filter(id => id !== columnId)
     }
     onDataUpdate(newData)
+    setColumnDeleteConfirmation({ isOpen: false, columnId: null, columnTitle: '', hasTasks: false })
+  }
+
+  const cancelColumnDelete = () => {
+    setColumnDeleteConfirmation({ isOpen: false, columnId: null, columnTitle: '', hasTasks: false })
   }
 
   return (
@@ -321,6 +331,7 @@ const Board = ({ data, onDataUpdate, searchTerm, selectedAssignee }) => {
           onClose={handleCloseModal}
           onSave={handleSaveTask}
           assignees={assignees}
+          allTasks={data.tasks}
         />
       )}
 
@@ -331,6 +342,27 @@ const Board = ({ data, onDataUpdate, searchTerm, selectedAssignee }) => {
         message={`Are you sure you want to delete "${deleteConfirmation.taskTitle}"? This action cannot be undone.`}
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
+      />
+
+      {/* Column Modal */}
+      <ColumnModal
+        isOpen={columnModal.isOpen}
+        column={columnModal.column}
+        onClose={() => setColumnModal({ isOpen: false, column: null })}
+        onSave={handleSaveColumn}
+      />
+
+      {/* Column Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={columnDeleteConfirmation.isOpen}
+        title="Delete Column"
+        message={
+          columnDeleteConfirmation.hasTasks
+            ? `Are you sure you want to delete "${columnDeleteConfirmation.columnTitle}"? This column contains ${data.columns[columnDeleteConfirmation.columnId]?.taskIds.length || 0} tasks. All tasks in this column will be permanently deleted.`
+            : `Are you sure you want to delete "${columnDeleteConfirmation.columnTitle}"? This action cannot be undone.`
+        }
+        onConfirm={confirmColumnDelete}
+        onCancel={cancelColumnDelete}
       />
     </div>
   )

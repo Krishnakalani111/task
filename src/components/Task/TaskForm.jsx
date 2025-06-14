@@ -1,7 +1,7 @@
 // src/components/Task/TaskForm.jsx
 import { useState } from 'react'
 
-const TaskForm = ({ task, onSave, onCancel, isNew, assignees = [] }) => {
+const TaskForm = ({ task, onSave, onCancel, isNew, assignees = [], allTasks = {} }) => {
   const [formData, setFormData] = useState({
     title: task?.title || '',
     type: task?.type || 'FEATURE',
@@ -12,7 +12,7 @@ const TaskForm = ({ task, onSave, onCancel, isNew, assignees = [] }) => {
     tags: task?.tags?.join(', ') || '',
     dependsOn: task?.dependsOn?.join(', ') || '',
     blocks: task?.blocks?.join(', ') || '',
-    attachments: task?.attachments?.join(', ') || ''
+    attachments: task?.attachments || []
   })
 
   const handleInputChange = (e) => {
@@ -21,6 +21,51 @@ const TaskForm = ({ task, onSave, onCancel, isNew, assignees = [] }) => {
       ...prev,
       [name]: value
     }))
+  }
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files)
+    
+    files.forEach(file => {
+      if (file.type.match(/^image\/(png|jpg|jpeg)$/)) {
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          const attachment = {
+            id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: event.target.result // Base64 data
+          }
+          
+          setFormData(prev => ({
+            ...prev,
+            attachments: [...prev.attachments, attachment]
+          }))
+        }
+        reader.readAsDataURL(file)
+      } else {
+        alert('Only PNG, JPG, and JPEG files are allowed')
+      }
+    })
+    
+    // Clear the input
+    e.target.value = ''
+  }
+
+  const handleRemoveAttachment = (attachmentId) => {
+    setFormData(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter(att => att.id !== attachmentId)
+    }))
+  }
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
   const handleSubmit = (e) => {
@@ -39,7 +84,7 @@ const TaskForm = ({ task, onSave, onCancel, isNew, assignees = [] }) => {
       tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
       dependsOn: formData.dependsOn ? formData.dependsOn.split(',').map(dep => dep.trim()).filter(dep => dep) : [],
       blocks: formData.blocks ? formData.blocks.split(',').map(block => block.trim()).filter(block => block) : [],
-      attachments: formData.attachments ? formData.attachments.split(',').map(att => att.trim()).filter(att => att) : []
+      attachments: formData.attachments
     }
     
     onSave(processedData)
@@ -51,14 +96,15 @@ const TaskForm = ({ task, onSave, onCancel, isNew, assignees = [] }) => {
         <h2 className="text-xl font-semibold text-gray-900">
           {isNew ? 'Create New Task' : 'Edit Task'}
         </h2>
-        <button
+        {/* <button
+          type="button"
           onClick={onCancel}
-          className="p-2 text-gray-400 hover:text-gray-600 rounded"
+          className="p-2 text-gray-400 hover:text-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
-        </button>
+        </button> */}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -207,7 +253,7 @@ const TaskForm = ({ task, onSave, onCancel, isNew, assignees = [] }) => {
               value={formData.dependsOn}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Task IDs separated by commas"
+              placeholder="Task IDs separated by commas (e.g., task-1, task-2)"
             />
           </div>
 
@@ -222,36 +268,72 @@ const TaskForm = ({ task, onSave, onCancel, isNew, assignees = [] }) => {
               value={formData.blocks}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Task IDs separated by commas"
+              placeholder="Task IDs separated by commas (e.g., task-3, task-4)"
             />
           </div>
         </div>
 
         {/* Attachments */}
         <div>
-          <label htmlFor="attachments" className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Attachments
           </label>
-          <input
-            type="text"
-            id="attachments"
-            name="attachments"
-            value={formData.attachments}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="File names or URLs separated by commas"
-          />
+          <div className="space-y-3">
+            <div>
+              <input
+                type="file"
+                id="attachments"
+                accept=".png,.jpg,.jpeg"
+                multiple
+                onChange={handleFileUpload}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Only PNG, JPG, and JPEG files are allowed. Multiple files can be selected.
+              </p>
+            </div>
+            
+            {/* Uploaded Files */}
+            {formData.attachments.length > 0 && (
+              <div className="space-y-2">
+                {formData.attachments.map((attachment) => (
+                  <div key={attachment.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded">
+                    <div className="flex items-center space-x-3">
+                      {attachment.data && (
+                        <img 
+                          src={attachment.data} 
+                          alt={attachment.name}
+                          className="w-8 h-8 object-cover rounded"
+                        />
+                      )}
+                      <div>
+                        <p className="text-sm font-medium">{attachment.name}</p>
+                        <p className="text-xs text-gray-500">{formatFileSize(attachment.size)}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAttachment(attachment.id)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Form Actions */}
         <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
-          <button
+          {/* <button
             type="button"
             onClick={onCancel}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Cancel
-          </button>
+          </button> */}
           <button
             type="submit"
             disabled={!formData.title.trim()}
